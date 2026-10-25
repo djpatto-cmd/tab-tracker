@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tab Tracker</title>
+<style>
+:root{
+  --bg:#f6f6f4;--surface:#fff;--ink:#1b1b1a;--ink2:#55554f;--mute:#8a8a83;--line:#e6e5e0;
+  --acc:#2f6fd6;--acc-soft:#e8f0fc;--bar:#3b78db;--bar-weak:#c9daf6;--warn:#b4541a;--warn-soft:#fbeee4;--good:#2d7a4b;
+  --shadow:0 1px 2px rgba(0,0,0,.05),0 2px 8px rgba(0,0,0,.04);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#111110;--surface:#1b1b1a;--ink:#ededea;--ink2:#b5b5ae;--mute:#85857e;--line:#2c2c2a;
+  --acc:#7eaaf2;--acc-soft:#1d2a40;--bar:#6b9ced;--bar-weak:#2a3c5c;--warn:#f0a36b;--warn-soft:#3a2516;--good:#6cc495;
+  --shadow:none;}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif}
+.wrap{max-width:1240px;margin:0 auto;padding:20px 16px 60px}
+header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+h1{font-size:24px;margin:0;letter-spacing:-.01em}
+.sub{color:var(--mute);font-size:13px;margin-top:2px}
+nav{display:flex;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:3px}
+nav button{border:0;background:none;color:var(--ink2);font:inherit;font-weight:500;padding:7px 12px;border-radius:7px;cursor:pointer}
+nav button.on{background:var(--acc-soft);color:var(--acc)}
+nav button span{color:var(--mute);font-weight:400;margin-left:4px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:12px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;box-shadow:var(--shadow);cursor:default}
+.tile[data-go]{cursor:pointer}.tile[data-go]:hover{border-color:var(--acc)}
+.tile b{display:block;font-size:28px;font-weight:650;letter-spacing:-.02em;line-height:1.1}
+.tile small{color:var(--ink2);font-size:12.5px}
+.tile em{display:block;font-style:normal;color:var(--mute);font-size:12px;margin-top:4px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:12px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;box-shadow:var(--shadow);min-width:0}
+.panel h3{margin:0 0 2px;font-size:14px}.panel p.h{margin:0 0 12px;color:var(--mute);font-size:12.5px}
+.bars{display:flex;flex-direction:column;gap:6px}
+.brow{display:grid;grid-template-columns:150px 1fr 34px;align-items:center;gap:8px;font-size:13px;padding:2px 4px;border-radius:6px}
+.brow[data-f]{cursor:pointer}.brow[data-f]:hover{background:var(--acc-soft)}
+.brow .lab{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink2)}
+.brow .trk{height:12px}
+.brow .fill{height:12px;background:var(--bar);border-radius:0 4px 4px 0;min-width:2px}
+.brow .n{text-align:right;color:var(--ink2);font-variant-numeric:tabular-nums}
+.mini{display:flex;flex-direction:column}
+.mini a{display:grid;grid-template-columns:18px 1fr auto;gap:8px;align-items:center;padding:6px 4px;border-bottom:1px solid var(--line);color:var(--ink);text-decoration:none}
+.mini a:last-child{border-bottom:0}.mini a:hover{background:var(--acc-soft)}
+.mini .t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mini .r{color:var(--mute);font-size:12px;white-space:nowrap}
+.fav{width:16px;height:16px;border-radius:3px;object-fit:contain}
+.fav.ph{display:inline-grid;place-items:center;background:var(--line);color:var(--ink2);font-size:10px;font-weight:600}
+.events{list-style:none;margin:0;padding:0}.events li{padding:6px 0;border-bottom:1px solid var(--line);font-size:13px}
+.events li:last-child{border-bottom:0}.events time{color:var(--mute);font-size:12px;display:block}
+svg text{fill:var(--mute);font-size:11px}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+.filters input,.filters select{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.filters input{flex:1;min-width:220px}
+.count{color:var(--mute);font-size:13px;margin-left:auto}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;text-decoration:none;color:var(--ink);box-shadow:var(--shadow);transition:transform .12s ease,border-color .12s ease}
+.card:hover{transform:translateY(-2px);border-color:var(--acc)}
+.pv{aspect-ratio:16/10;background:var(--bg);border-bottom:1px solid var(--line);position:relative;overflow:hidden}
+.pv img.shot{width:100%;height:100%;object-fit:cover;object-position:top}
+.pv .phc{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--mute);font-size:12px;padding:12px;text-align:center}
+.pv .phc img,.pv .phc .big{width:40px;height:40px;border-radius:9px;object-fit:contain}
+.pv .phc .big{display:grid;place-items:center;background:var(--line);color:var(--ink2);font-size:18px;font-weight:650}
+.badge{position:absolute;top:8px;left:8px;font-size:11px;font-weight:600;padding:3px 7px;border-radius:999px;background:var(--warn-soft);color:var(--warn)}
+.badge.hot{background:var(--acc-soft);color:var(--acc)}
+.cb{padding:10px 12px 12px;display:flex;flex-direction:column;gap:5px;flex:1}
+.dom{display:flex;align-items:center;gap:6px;color:var(--mute);font-size:12px;min-width:0}
+.dom span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ttl{font-weight:600;font-size:13.5px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.desc{color:var(--ink2);font-size:12.5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.meta{margin-top:auto;padding-top:6px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:11.5px;color:var(--mute)}
+.chip{background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:1px 7px;color:var(--ink2)}
+.empty{color:var(--mute);padding:40px;text-align:center}
+#tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--bg);font-size:12px;padding:6px 8px;border-radius:6px;opacity:0;transition:opacity .1s;z-index:9;max-width:260px}
+.note{color:var(--mute);font-size:12.5px;margin-top:18px}
+code{background:var(--surface);border:1px solid var(--line);padding:1px 5px;border-radius:4px;font-size:12px}
+@media (max-width:640px){.brow{grid-template-columns:110px 1fr 30px}nav{width:100%}nav button{flex:1;padding:7px 4px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div><h1>Tab Tracker</h1><div class="sub" id="sub"></div></div>
+    <nav id="nav"></nav>
+  </header>
+  <main id="main"></main>
+  <p class="note">Refreshes itself every hour while Chrome is open. To refresh now, run <code>python3 -I tabtracker.py</code> in this folder, then reload. Previews are taken logged out, and only for public pages.</p>
+</div>
+<div id="tip"></div>
+<script src="data.js"></script>
+<script>
+const D = window.TAB_DATA || {tabs:{},snapshots:[],events:[]};
+const T = Object.values(D.tabs);
+const NOW = Date.now(), DAY = 864e5;
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const parse = s => s ? new Date(s.replace(' ', 'T')).getTime() : null;
+const ago = s => { const t = parse(s); if (!t) return 'never in history';
+  const d = (NOW - t) / DAY; if (d < 1/24) return 'just now'; if (d < 1) return Math.round(d*24) + 'h ago';
+  if (d < 14) return Math.round(d) + 'd ago'; if (d < 60) return Math.round(d/7) + 'w ago'; return Math.round(d/30) + 'mo ago'; };
+const AGES = ['Today','This week','This month','Over a month','No history'];
+const age = r => { const t = parse(r.last_visit); if (!t) return AGES[4]; const d = (NOW - t) / DAY;
+  return d < 1 ? AGES[0] : d <= 7 ? AGES[1] : d <= 30 ? AGES[2] : AGES[3]; };
+const fav = (r, cls='fav') => r.favicon ? `<img class="${cls}" src="${esc(r.favicon)}" alt="">`
+  : `<span class="${cls} ph">${esc((r.domain||'?')[0].toUpperCase())}</span>`;
+const open = T.filter(r => r.open), closed = T.filter(r => !r.open);
+const count = (arr, f) => arr.reduce((m, r) => (m[f(r)] = (m[f(r)]||0) + 1, m), {});
+
+let state = {view:'dash', q:'', cat:'', age:'', sort:'recent'};
+try { Object.assign(state, JSON.parse(localStorage.getItem('tabtracker') || '{}')); } catch(e) {}
+const save = () => { try { localStorage.setItem('tabtracker', JSON.stringify(state)); } catch(e) {} };
+
+$('#sub').textContent = `Last checked ${D.updated ? ago(D.updated) + ' (' + D.updated + ')' : 'never'} · tracking ${T.length} pages since ${D.snapshots[0]?.t.slice(0,10) || '-'}`;
+
+function nav(){
+  const v = [['dash','Dashboard',''],['open','Open',open.length],['closed','Closed',closed.length],['all','All',T.length]];
+  $('#nav').innerHTML = v.map(([k,l,n]) => `<button data-v="${k}" class="${state.view===k?'on':''}">${l}${n!==''?`<span>${n}</span>`:''}</button>`).join('');
+  $('#nav').onclick = e => { const b = e.target.closest('button'); if (b) go(b.dataset.v); };
+}
+function go(view, extra={}){ Object.assign(state, {view, q:'', cat:'', age:''}, extra); save(); render(); scrollTo(0,0); }
+
+function bars(obj, order, filterKey){
+  const rows = (order || Object.keys(obj).sort((a,b) => obj[b]-obj[a])).filter(k => obj[k]);
+  const max = Math.max(1, ...rows.map(k => obj[k]));
+  return `<div class="bars">${rows.map(k => `<div class="brow" ${filterKey?`data-f="${filterKey}" data-v="${esc(k)}"`:''} data-tip="${esc(k)}: ${obj[k]} tab${obj[k]>1?'s':''}">
+    <span class="lab">${esc(k)}</span><span class="trk"><div class="fill" style="width:${obj[k]/max*100}%"></div></span><span class="n">${obj[k]}</span></div>`).join('')}</div>`;
+}
+function trend(){
+  const s = D.snapshots; if (s.length < 2) return '<p class="h">The trend line appears after a couple of hourly checks.</p>';
+  const W = 560, H = 150, P = {l:30, r:10, t:10, b:22};
+  const xs = s.map(p => parse(p.t)), x0 = Math.min(...xs), x1 = Math.max(...xs);
+  const top = Math.max(...s.map(p => p.open)), ymax = top * 1.15;
+  const X = t => P.l + (t - x0) / Math.max(1, x1 - x0) * (W - P.l - P.r), Y = v => H - P.b - v / ymax * (H - P.t - P.b);
+  const pts = s.map((p,i) => [X(xs[i]), Y(p.open)]);
+  const grid = [0, Math.round(top/2), top].map(v => `<line x1="${P.l}" x2="${W-P.r}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${P.l-6}" y="${Y(v)+4}" text-anchor="end">${v}</text>`).join('');
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Open tabs over time">${grid}
+    <polyline fill="none" stroke="var(--bar)" stroke-width="2" stroke-linejoin="round" points="${pts.map(p=>p.join(',')).join(' ')}"/>
+    ${pts.map((p,i) => `<circle cx="${p[0]}" cy="${p[1]}" r="4" fill="var(--bar)" stroke="var(--surface)" stroke-width="2"/><circle cx="${p[0]}" cy="${p[1]}" r="12" fill="transparent" data-tip="${s[i].t}: ${s[i].open} open"/>`).join('')}
+    <text x="${P.l}" y="${H-4}">${s[0].t.slice(0,10)}</text><text x="${W-P.r}" y="${H-4}" text-anchor="end">${s[s.length-1].t.slice(0,10)}</text></svg>`;
+}
+const mini = (arr, right) => arr.length ? `<div class="mini">${arr.map(r => `<a href="${esc(r.url)}" target="_blank" rel="noopener" title="${esc(r.desc||r.title)}">${fav(r)}<span class="t">${esc(r.title||r.url)}</span><span class="r">${right(r)}</span></a>`).join('')}</div>` : '<p class="h">Nothing here yet.</p>';
+
+function dash(){
+  const used7 = open.filter(r => r.v7 > 0).length;
+  const stale = open.filter(r => age(r) === AGES[3] || age(r) === AGES[4]);
+  const month = open.filter(r => age(r) === AGES[2]);
+  const dups = open.reduce((n,r) => n + Math.max(0,(r.open_count||1)-1), 0);
+  const ads = open.filter(r => r.from_ad).length;
+  const doms = count(open, r => r.domain); const topDom = {}; Object.keys(doms).sort((a,b)=>doms[b]-doms[a]).slice(0,8).forEach(k => topDom[k]=doms[k]);
+  const hot = [...open].filter(r => r.v7 > 0).sort((a,b) => b.v7 - a.v7).slice(0,8);
+  const dust = [...open].sort((a,b) => (parse(a.last_visit)||0) - (parse(b.last_visit)||0)).slice(0,8);
+  const fresh = [...T].sort((a,b) => (parse(b.first_seen)||0) - (parse(a.first_seen)||0)).filter(r => r.first_seen > (D.snapshots[0]?.t||'')).slice(0,8);
+  return `<div class="tiles">
+    <div class="tile" data-go="open"><b>${open.length}</b><small>Open now</small><em>across ${new Set(open.map(r=>r.window)).size} windows</em></div>
+    <div class="tile" data-go="open" data-sort="used"><b>${used7}</b><small>Used this week</small><em>${Math.round(used7/Math.max(1,open.length)*100)}% of open tabs</em></div>
+    <div class="tile" data-go="open" data-age="This month"><b>${month.length}</b><small>Idle 1 to 4 weeks</small><em>next candidates to close</em></div>
+    <div class="tile" data-go="open" data-age="Over a month"><b>${stale.length}</b><small>Untouched 30+ days</small><em>or never in history</em></div>
+    <div class="tile" data-go="closed"><b>${closed.length}</b><small>Closed so far</small><em>all still clickable here</em></div>
+    <div class="tile"><b>${dups}</b><small>Duplicate copies</small><em>${ads} open tabs came from ads</em></div>
+  </div>
+  <div class="grid2">
+    <div class="panel"><h3>Open tabs by last visit</h3><p class="h">Click a row to see those tabs.</p>${bars(count(open, age), AGES, 'age')}</div>
+    <div class="panel"><h3>Open tabs by type</h3><p class="h">Click a row to see those tabs.</p>${bars(count(open, r => r.category), null, 'cat')}</div>
+    <div class="panel"><h3>Most used this week</h3><p class="h">Visits in the last 7 days, from Chrome history.</p>${mini(hot, r => r.v7 + ' visit' + (r.v7>1?'s':''))}</div>
+    <div class="panel"><h3>Gathering dust</h3><p class="h">Open tabs you've gone longest without visiting.</p>${mini(dust, r => ago(r.last_visit))}</div>
+    <div class="panel"><h3>Open tabs over time</h3><p class="h">One point per hourly check.</p>${trend()}</div>
+    <div class="panel"><h3>Top sites</h3><p class="h">Sites with the most open tabs.</p>${bars(topDom)}</div>
+    <div class="panel"><h3>New since tracking began</h3><p class="h">Tabs opened after the first snapshot.</p>${mini(fresh, r => ago(r.first_seen))}</div>
+    <div class="panel"><h3>Activity</h3><p class="h">Opens and closes the tracker has noticed.</p><ul class="events">${[...D.events].reverse().slice(0,10).map(e => `<li><time>${esc(e.t)}</time>${esc(e.text)}</li>`).join('') || '<li>No changes yet.</li>'}</ul></div>
+  </div>`;
+}
+
+function list(){
+  const base = state.view === 'open' ? open : state.view === 'closed' ? closed : T;
+  const cats = [...new Set(T.map(r => r.category))].sort();
+  const q = state.q.toLowerCase();
+  let rows = base.filter(r => (!state.cat || r.category === state.cat) && (!state.age || age(r) === state.age)
+    && (!q || [r.title, r.desc, r.domain, r.url, r.category].join(' ').toLowerCase().includes(q)));
+  const by = {recent:(a,b) => (parse(b.last_visit)||0)-(parse(a.last_visit)||0), used:(a,b) => b.v7-a.v7 || b.v30-a.v30,
+    oldest:(a,b) => (parse(a.last_visit)||0)-(parse(b.last_visit)||0), found:(a,b) => (parse(b.first_seen)||0)-(parse(a.first_seen)||0),
+    closed:(a,b) => (parse(b.closed_on)||0)-(parse(a.closed_on)||0), site:(a,b) => (a.domain||'').localeCompare(b.domain||'')};
+  rows.sort(by[state.sort] || by.recent);
+  const opt = (v,l,cur) => `<option value="${esc(v)}" ${v===cur?'selected':''}>${esc(l)}</option>`;
+  return `<div class="filters">
+    <input type="search" id="q" placeholder="Search titles, descriptions, sites" value="${esc(state.q)}">
+    <select id="cat">${opt('','All types',state.cat)}${cats.map(c => opt(c,c,state.cat)).join('')}</select>
+    <select id="age">${opt('','Any last visit',state.age)}${AGES.map(a => opt(a,a,state.age)).join('')}</select>
+    <select id="sort">${[['recent','Recently visited'],['used','Most used this week'],['oldest','Longest untouched'],['found','Newest found'],['closed','Recently closed'],['site','Site A to Z']].map(([v,l]) => opt(v,l,state.sort)).join('')}</select>
+    <span class="count">${rows.length} tab${rows.length===1?'':'s'}</span></div>
+  ${rows.length ? `<div class="cards">${rows.map(card).join('')}</div>` : '<div class="empty">No tabs match.</div>'}`;
+}
+function card(r){
+  const pv = r.thumb ? `<img class="shot" loading="lazy" src="${esc(r.thumb)}" alt="">`
+    : `<div class="phc">${fav(r, r.favicon ? '' : 'big')}<span>${esc(r.domain)}</span>${r.thumb_skip ? `<span>No preview: ${esc(r.thumb_skip)}</span>` : ''}</div>`;
+  const badge = !r.open ? `<span class="badge">Closed ${esc((r.closed_on||'').slice(0,10))}</span>` : r.v7 >= 3 ? `<span class="badge hot">Busy this week</span>` : '';
+  return `<a class="card" href="${esc(r.url)}" target="_blank" rel="noopener">
+    <div class="pv">${pv}${badge}</div>
+    <div class="cb"><div class="dom">${fav(r)}<span>${esc(r.domain)}</span></div>
+      <div class="ttl">${esc(r.title || r.url)}</div>
+      ${r.desc ? `<div class="desc">${esc(r.desc)}</div>` : ''}
+      <div class="meta"><span class="chip">${esc(r.category)}</span><span>Visited ${ago(r.last_visit)}</span>${r.v7 ? `<span>· ${r.v7} this week</span>` : ''}</div></div></a>`;
+}
+
+function render(){
+  nav();
+  $('#main').innerHTML = state.view === 'dash' ? dash() : list();
+  if (state.view !== 'dash') {
+    const q = $('#q'); q.oninput = () => { state.q = q.value; save(); const p = q.selectionStart; render(); const n = $('#q'); n.focus(); n.setSelectionRange(p,p); };
+    ['cat','age','sort'].forEach(id => $('#'+id).onchange = e => { state[id] = e.target.value; save(); render(); });
+  }
+}
+$('#main').addEventListener('click', e => {
+  const t = e.target.closest('[data-go]'); if (t) return go(t.dataset.go, {age: t.dataset.age||'', sort: t.dataset.sort||state.sort});
+  const b = e.target.closest('.brow[data-f]'); if (b) return go('open', {[b.dataset.f]: b.dataset.v});
+});
+const tip = $('#tip');
+document.addEventListener('mousemove', e => { const el = e.target.closest('[data-tip]');
+  if (!el) { tip.style.opacity = 0; return; } tip.textContent = el.dataset.tip; tip.style.opacity = 1;
+  tip.style.left = Math.min(e.clientX + 12, innerWidth - 270) + 'px'; tip.style.top = (e.clientY + 14) + 'px'; });
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+# Your own browsing data: never commit these
+db.json
+data.js
+thumbs/
+favicons/
+*.log
+.DS_Store
+__pycache__/
